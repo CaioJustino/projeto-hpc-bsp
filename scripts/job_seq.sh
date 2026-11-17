@@ -16,14 +16,9 @@ make seq
 
 # Parâmetros Globais do Experimento
 NUM_RUNS=10
-TOL=0.0  # Carga fixa para benchmark sustentado (executa todas as iterações)
+TOL=0.0
 
-# Suíte de Matrizes e Carga de Iterações (Calibrado para durar ~1 hora no total com 10 repetições)
-# - bcsstk21: 50.000 iterações (~25s total)
-# - memplus:  100.000 iterações (~2,5min total)
-# - s3dkq4m2: 20.000 iterações (~20min total)
-# - thermal2: 10.000 iterações (~40min total)
-# Tempo total estimado: ~63 minutos
+# Suíte de Matrizes e Carga de Iterações
 EXPERIMENTOS=(
     "data/bcsstk21.mtx 50000"
     "data/memplus.mtx 100000"
@@ -31,7 +26,7 @@ EXPERIMENTOS=(
     "data/thermal2.mtx 10000"
 )
 
-echo "EXECUÇÃO (SEQUENCIAL - CARGA SUSTENTADA ~1H)"
+echo "EXECUÇÃO (SEQUENCIAL)"
 echo ""
 echo "- Data/Hora (Início): $(date)"
 

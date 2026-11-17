@@ -53,13 +53,11 @@ int gauss_jacobi_seq(const CSRMatrix *A, const double *b, double *x, double *nex
             }
         }
 
-        /* Cópia explícita dos novos valores para o vetor solução x a cada iteração */
         for (int i = 0; i < N; i++) {
             x[i] = next[i];
         }
         iter++;
 
-        /* Se tol > 0.0, verifica critério de parada prematura; se tol <= 0.0, executa teto fixo */
         if (tol > 0.0 && max_diff < tol) {
             break;
         }
