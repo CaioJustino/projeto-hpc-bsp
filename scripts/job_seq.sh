@@ -10,9 +10,9 @@
 #SBATCH --error=errors/%j.err
 #SBATCH --chdir=/home/cvajustino/projeto-hpc-bsp
 
-mkdir -p output errors
+mkdir -p output errors results bin
 
-gcc -O3 -march=native -funroll-loops src/gauss_jacobi_seq.c -o src/gauss_jacobi_seq -lm
+make seq
 
 # Parâmetros do Experimento
 NUM_RUNS=10
@@ -32,7 +32,7 @@ echo "- Data/Hora (Início): $(date)"
 
 for MATRIZ in "${MATRIZES[@]}"; do
     if [ -f "$MATRIZ" ]; then
-        ./src/gauss_jacobi_seq "$MATRIZ" "$NUM_RUNS" "$MAX_ITER"
+        ./bin/gauss_jacobi_seq "$MATRIZ" "$NUM_RUNS" "$MAX_ITER"
     else
         echo "AVISO: Arquivo $MATRIZ não encontrado!" >&2
     fi
