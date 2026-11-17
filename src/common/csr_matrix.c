@@ -23,7 +23,7 @@ int load_matrix_market_csr(const char *filename, CSRMatrix *mat) {
     }
 
     /*
-        1. Leitura do cabeçalho e identificação de simetria
+        1. Leitura do cabeçalho e identificação de simetria.
     */
     char line[1024];
     if (!fgets(line, sizeof(line), f)) {
@@ -44,7 +44,7 @@ int load_matrix_market_csr(const char *filename, CSRMatrix *mat) {
     }
 
     /*
-        2. Leitura temporária das coordenadas (formato COO)
+        2. Leitura temporária das coordenadas (formato COO).
     */
     int max_entries = is_symmetric ? entries * 2 : entries;
     int *coo_r    = (int *)malloc((size_t)max_entries * sizeof(int));
@@ -73,7 +73,6 @@ int load_matrix_market_csr(const char *filename, CSRMatrix *mat) {
         coo_v[actual_nnz] = v;
         actual_nnz++;
 
-        /* Espelha elementos fora da diagonal quando a matriz é simétrica */
         if (is_symmetric && r != c) {
             coo_r[actual_nnz] = c;
             coo_r[actual_nnz] = r;
@@ -84,7 +83,7 @@ int load_matrix_market_csr(const char *filename, CSRMatrix *mat) {
     fclose(f);
 
     /*
-        3. Conversão de COO para CSR
+        3. Conversão de COO para CSR.
     */
     mat->num_rows = rows;
     mat->num_cols = cols;
