@@ -6,7 +6,7 @@
 #include "utils.h"
 
 #define DEFAULT_MAX_ITER 5000
-#define DEFAULT_NUM_RUNS 10
+#define DEFAULT_NUM_RUNS 20
 #define TOL 1e-6
 
 
@@ -89,15 +89,19 @@ int main(int argc, char *argv[]) {
     fflush(stdout);
 
     /*
-        1. Carregamento e Validação da Matriz Esparsa.
+        1. Carregamento e Validação da Matriz Esparsa (Medição de I/O + Construção CSR).
     */
     CSRMatrix A;
+    double t_load_start = get_time_sec();
     if (load_matrix_market_csr(argv[1], &A) != 0) {
         return 1;
     }
+    double t_load_end = get_time_sec();
+    double load_time  = t_load_end - t_load_start;
 
     int N = A.num_rows;
-    printf("Dimensão: %d x %d | Não-zeros (NNZ): %d\n\n", N, A.num_cols, A.nnz);
+    printf("Dimensão: %d x %d | Não-zeros (NNZ): %d\n", N, A.num_cols, A.nnz);
+    printf("Tempo de Carregamento (I/O + CSR): %.6f s\n\n", load_time);
     fflush(stdout);
 
     if (N <= 0) {
@@ -136,7 +140,7 @@ int main(int argc, char *argv[]) {
     initialize_rhs(&A, b);
 
     /*
-        3. Execução do Benchmark (Loop de Repetições).
+        3. Execução do Benchmark (Loop de Repetições do Solver).
     */
     int last_iter         = 0;
     double last_max_diff  = 0.0;
@@ -187,10 +191,10 @@ int main(int argc, char *argv[]) {
     double mean_iter_ms = (mean_time > 0.0 && last_iter > 0) ? ((mean_time / last_iter) * 1000.0) : 0.0;
 
     /*
-        5. Exibição dos Resultados Consolidados.
+        5. Exibição dos Resultados Consolidados (Separação Clara entre I/O e Solver).
     */
     printf("\nRESULTADOS CONSOLIDADOS (SEQUENCIAL - %d EXECUÇÕES)\n", num_runs);
-    printf("\nMatriz avaliada: %s\n", argv[1]);
+    printf("Matriz avaliada: %s\n", argv[1]);
     printf("Status da convergência: %s\n", (last_max_diff < TOL) ? "CONVERGIU" : "LIMITE DE ITERAÇÕES");
     printf("Dimensão da matriz (N): %d\n", N);
     printf("Elementos não-nulos: %d (Densidade: %.4f%%)\n", A.nnz, ((double)A.nnz / ((double)N * N)) * 100.0);
@@ -198,15 +202,44 @@ int main(int argc, char *argv[]) {
     printf("Iterações executadas: %d / %d\n", last_iter, max_iter);
     printf("Resíduo final (|x-x_old|): %.10e (%.12f)\n", last_max_diff, last_max_diff);
     printf("Erro absoluto máx (|x-1|): %.10e (%.12f)\n", last_sol_error, last_sol_error);
-    printf("Tempo médio de execução: %.6f s (± %.6f s)\n", mean_time, std_time);
-    printf("Tempo mínimo / máximo: %.6f s / %.6f s\n", min_time, max_time);
-    printf("Tempo total acumulado (%dx): %.6f s\n", num_runs, sum_time);
-    printf("Tempo médio por iteração: %.6f ms\n", mean_iter_ms);
-    printf("Throughput médio estimado: %.2f MFlops/s\n\n", mean_mflops);
+
+    printf("\n--- TEMPOS DE EXECUÇÃO ---\n");
+    printf("- Tempo de Carregamento (I/O + CSR): %.6f s\n", load_time);
+    printf("- Tempo Médio do Solver (%dx):        %.6f s (± %.6f s)\n", num_runs, mean_time, std_time);
+    printf("- Tempo Mínimo / Máximo do Solver:   %.6f s / %.6f s\n", min_time, max_time);
+    printf("- Tempo Acumulado do Solver (%dx):   %.6f s\n", num_runs, sum_time);
+    printf("- Tempo Total (I/O + Solver Médio):  %.6f s\n", load_time + mean_time);
+    printf("- Tempo Total Acumulado (I/O + %dx): %.6f s\n", num_runs, load_time + sum_time);
+    printf("- Tempo Médio por Iteração:          %.6f ms\n", mean_iter_ms);
+    printf("- Throughput Médio Estimado:         %.2f MFlops/s\n\n", mean_mflops);
     fflush(stdout);
 
     /*
-        6. Liberação de Recursos
+        6. Salvamento dos Resultados Consolidados em CSV.
+    */
+    FILE *f_csv = fopen("results/results_seq.csv", "r");
+    int write_header = (f_csv == NULL);
+    if (f_csv) {
+        fclose(f_csv);
+    }
+
+    f_csv = fopen("results/results_seq.csv", "a");
+    if (f_csv) {
+        if (write_header) {
+            fprintf(f_csv, "matriz,dimensao,nnz,densidade_pct,repeticoes,iteracoes,max_iter,convergencia,"
+                           "tempo_io_csr_s,tempo_solver_medio_s,desvio_padrao_s,tempo_solver_min_s,tempo_solver_max_s,"
+                           "tempo_solver_acumulado_s,tempo_total_s,tempo_medio_iter_ms,mflops,residuo_final,erro_max_solucao\n");
+        }
+        fprintf(f_csv, "%s,%d,%d,%.6f,%d,%d,%d,%s,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.2f,%.10e,%.10e\n",
+                argv[1], N, A.nnz, ((double)A.nnz / ((double)N * N)) * 100.0,
+                num_runs, last_iter, max_iter, (last_max_diff < TOL) ? "CONVERGIU" : "LIMITE_ITERACOES",
+                load_time, mean_time, std_time, min_time, max_time,
+                sum_time, load_time + mean_time, mean_iter_ms, mean_mflops, last_max_diff, last_sol_error);
+        fclose(f_csv);
+    }
+
+    /*
+        7. Liberação de Recursos.
     */
     free(run_times);
     free(b);
