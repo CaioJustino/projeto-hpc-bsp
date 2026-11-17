@@ -6,7 +6,7 @@
 #include "utils.h"
 
 #define DEFAULT_MAX_ITER 5000
-#define DEFAULT_NUM_RUNS 20
+#define DEFAULT_NUM_RUNS 10
 #define TOL 1e-6
 
 
@@ -29,10 +29,8 @@
 int gauss_jacobi_seq(const CSRMatrix *A, const double *b, double *x, double *next,
                      int max_iter, double tol, double *final_diff) {
     int N = A->num_rows;
-    double *cur_x    = x;
-    double *cur_next = next;
-    double max_diff  = 0.0;
-    int iter         = 0;
+    double max_diff = 0.0;
+    int iter = 0;
 
     while (iter < max_iter) {
         max_diff = 0.0;
@@ -43,30 +41,27 @@ int gauss_jacobi_seq(const CSRMatrix *A, const double *b, double *x, double *nex
             for (int k = A->row_ptr[i]; k < A->row_ptr[i + 1]; k++) {
                 int j = A->col_idx[k];
                 if (i != j) {
-                    sum += A->values[k] * cur_x[j];
+                    sum += A->values[k] * x[j];
                 }
             }
 
-            cur_next[i] = (b[i] - sum) / A->diag[i];
+            next[i] = (b[i] - sum) / A->diag[i];
 
-            double diff = fabs(cur_next[i] - cur_x[i]);
+            double diff = fabs(next[i] - x[i]);
             if (diff > max_diff) {
                 max_diff = diff;
             }
         }
 
-        double *temp = cur_x;
-        cur_x = cur_next;
-        cur_next = temp;
+        /* Cópia explícita dos novos valores para o vetor solução x a cada iteração */
+        for (int i = 0; i < N; i++) {
+            x[i] = next[i];
+        }
         iter++;
 
         if (max_diff < tol) {
             break;
         }
-    }
-
-    if (cur_x != x) {
-        memcpy(x, cur_x, (size_t)N * sizeof(double));
     }
 
     *final_diff = max_diff;

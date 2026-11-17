@@ -3,15 +3,15 @@ CC      = gcc
 MPICC   = mpicc
 NVCC    = nvcc
 
-# Flags de Compilação
-CFLAGS  = -O3 -march=native -funroll-loops -Wall -Wextra -Iinclude
+# Flags de compilação (otimização padrão, sem vetorização agressiva ou unroll)
+CFLAGS  = -O2 -Wall -Wextra -Iinclude
 LDFLAGS = -lm
 
-# Diretórios do Projeto
+# Diretórios do projeto
 BIN_DIR = bin
 SRC_DIR = src
 
-# Fontes Comuns
+# Fontes comuns
 COMMON_SRC = $(SRC_DIR)/common/csr_matrix.c $(SRC_DIR)/common/utils.c
 
 # Versão Sequencial

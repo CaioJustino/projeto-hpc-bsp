@@ -15,7 +15,7 @@ mkdir -p output errors results bin
 make seq
 
 # Parâmetros do Experimento
-NUM_RUNS=20
+NUM_RUNS=10
 MAX_ITER=5000
 
 # Suíte de Matrizes
