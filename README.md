@@ -163,4 +163,4 @@ tail -f output/<JOB_ID>.out
 
 ---
 
-*Discentes:* Caio Justino, João Lucas e Liriel Felix.
+**Discentes:** Caio Justino, João Lucas e Liriel Felix.
