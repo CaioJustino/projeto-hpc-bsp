@@ -1,21 +1,41 @@
 #!/bin/bash
-#SBATCH --job-name=gauss_jacobi_baseline
+#SBATCH --job-name=gauss_jacobi_seq
 #SBATCH --partition=amd-512
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=32G
-#SBATCH --time=01:00:00
-#SBATCH --output=output/baseline_%j.out
-#SBATCH --error=errors/baseline_%j.err
+#SBATCH --time=01:30:00
+#SBATCH --output=output/%j.out
+#SBATCH --error=errors/%j.err
 #SBATCH --chdir=/home/cvajustino/projeto-hpc-bsp
 
 mkdir -p output errors
 
-# Compilação
 gcc -O3 -march=native -funroll-loops src/gauss_jacobi_seq.c -o src/gauss_jacobi_seq -lm
 
-# Execução
-MATRIZ="data/thermal2.mtx"
+# Parâmetros do Experimento
+NUM_RUNS=10
+MAX_ITER=5000
 
-./src/gauss_jacobi_seq "$MATRIZ"
+# Suíte de Matrizes
+MATRIZES=(
+    "data/bcsstk21.mtx"
+    "data/memplus.mtx"
+    "data/s3dkq4m2.mtx"
+    "data/thermal2.mtx"
+)
+
+echo "EXECUÇÃO (SEQUENCIAL)"
+echo ""
+echo "- Data/Hora (Início): $(date)"
+
+for MATRIZ in "${MATRIZES[@]}"; do
+    if [ -f "$MATRIZ" ]; then
+        ./src/gauss_jacobi_seq "$MATRIZ" "$NUM_RUNS" "$MAX_ITER"
+    else
+        echo "AVISO: Arquivo $MATRIZ não encontrado!" >&2
+    fi
+done
+
+echo "- Data/Hora (Final): $(date)"
